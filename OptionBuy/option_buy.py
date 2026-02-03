@@ -19,20 +19,11 @@ from dotenv import (  # pip install python-dotenv
     load_dotenv,
 )
 
-"""
-slack_url = os.environ.get('slack_url')
-slack_channel = os.environ.get('slack_channel')
-CONNECTION_STRING = os.environ.get('CONNECTION_STRING')  #Mongo Connection
-user_name = os.environ.get('user_name')
-quantity = os.environ.get('quantity')
-trade_start_time = parser.parse("9:29:00").time()
-trade_end_time = parser.parse(str(os.environ.get('trade_end_time'))).time()
-slack_client = WebClient(token=os.environ.get('slack_client'))
-"""
+
 dotenv_file: str = find_dotenv()
 load_dotenv(dotenv_file)
 
-slack_channel = "niftyironfly"
+slack_channel = "niftyswing"
 CONNECTION_STRING = os.environ.get('CONNECTION_STRING')  # Mongo Connection
 user_name = os.environ.get('user_name')
 trade_start_time = parser.parse("9:16:00").time()
@@ -270,6 +261,7 @@ def record_details_in_mongo(buy_strike_symbol, trend, expiry, long_option_cost):
     'long_option_cost' : long_option_cost,
     'stop_loss' : round(-0.5 * long_option_cost * int(quantity), 2),
     'target' : round(2 * long_option_cost * int(quantity), 2),
+    'total_investment' : round(long_option_cost * int(quantity), 2),
     'entry_time' : datetime.datetime.now().strftime('%H:%M'),
     'exit_time' : '',
     'instrument_close' : edge.fetch_ltp(conn, 'NSE', trading_symbol),

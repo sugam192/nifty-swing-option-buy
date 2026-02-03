@@ -23,7 +23,7 @@ from dotenv import (  # pip install python-dotenv
 
 dotenv_file: str = find_dotenv()
 load_dotenv(dotenv_file)
-slack_channel = "niftyironfly"
+slack_channel = "niftyswing"
 slack_client = WebClient(token=os.environ.get('slack_token'))
 user_name = os.environ.get('user_name')
 CONNECTION_STRING = os.environ.get('CONNECTION_STRING')  #Mongo Connection
@@ -100,8 +100,8 @@ def get_straddle_chart(conn, strike=19950, CE_option_symbol=None, PE_option_symb
     return straddle, CE_option_symbol, PE_option_symbol
 
 def main():
-    print("IronFly analyser Bot is running...")
-    util.notify(message=f"{instrument_name} IronFly Analyser Bot is Alive!", slack_client=slack_client, slack_channel=slack_channel)
+    print("Option Buying Signal is running...")
+    util.notify(message=f"{instrument_name} Option Buying Signal is Alive!", slack_client=slack_client, slack_channel=slack_channel)
     # Track the time when the last notification was sent
     last_notification_time = datetime.now()
     initialization_needed = True
@@ -114,8 +114,8 @@ def main():
         elapsed_time = notification_time - last_notification_time
         print(f"elapsed time: {elapsed_time}")
         if elapsed_time >= timedelta(hours=1):
-            util.notify(message=f"{instrument_name} IronFly Analyser Bot is Alive!", slack_client=slack_client, slack_channel=slack_channel)
-            util.notify(message=f"current time from {instrument_name} IronFly Analyser: {current_time}", slack_client=slack_client, slack_channel=slack_channel)
+            util.notify(message=f"{instrument_name} Option Buying Signal is Alive!", slack_client=slack_client, slack_channel=slack_channel)
+            util.notify(message=f"current time from {instrument_name} Option Buying Signal: {current_time}", slack_client=slack_client, slack_channel=slack_channel)
             # Update the last notification time
             last_notification_time = notification_time
         conn = edge.login_to_integrate()
@@ -212,6 +212,7 @@ def main():
                 
         print("repeating loop for Supertrend")
         if current_time > trade_end_time:
+            util.notify("Closing Bell, Signal will exit now",slack_client=slack_client, slack_channel=slack_channel)
             return
         
         time.sleep(10)

@@ -39,3 +39,21 @@ jobs:
         run: |
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.NIFTY_IMAGE_NAME }}
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.STRADDLE_IMAGE_NAME }}
+
+      - name: Deploy to Option Buy
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az containerapp job update \
+              --name ${{ secrets.OPTION_BUY_JOB_NAME }} \
+              --resource-group ${{ secrets.RESOURCE_GROUP }} \
+              --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.NIFTY_IMAGE_NAME }}
+
+      - name: Deploy to Signal Job
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az containerapp job update \
+              --name ${{ secrets.SIGNAL_JOB_NAME }} \
+              --resource-group ${{ secrets.RESOURCE_GROUP }} \
+              --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.STRADDLE_IMAGE_NAME }}
