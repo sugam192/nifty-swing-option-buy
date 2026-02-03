@@ -24,7 +24,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
 
-      - name: Build and push Docker image to ACR
+      - name: Login to Azure Container Registry
         uses: azure/docker-login@v2
         with:
           login-server: ${{ secrets.ACR_NAME }}.azurecr.io
