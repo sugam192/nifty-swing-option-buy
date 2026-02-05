@@ -261,6 +261,7 @@ def record_details_in_mongo(buy_strike_symbol, trend, expiry, long_option_cost, 
     'long_option_symbol' : buy_strike_symbol,
     'long_option_cost' : long_option_cost,
     'stop_loss' : round(-0.5 * long_option_cost * int(quantity), 2),
+    'trailing_stop_loss' : round(-0.5 * long_option_cost * int(quantity), 2),
     'target' : round(2 * long_option_cost * int(quantity), 2),
     'total_investment' : round(long_option_cost * int(quantity), 2),
     'entry_time' : datetime.datetime.now().strftime('%H:%M'),
@@ -346,21 +347,21 @@ def main():
                     active_strategies = strategies.find(
                         {'strategy_state': 'active'})
                     for strategy in active_strategies:
-                        if strategy['max_pnl_reached'] < get_pnl(strategy, start):
-                            max_pnl = get_pnl(strategy, start)                         
-                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'max_pnl_reached': max_pnl}})
-                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'stop_loss': strategy['stop_loss'] + max_pnl}})
+                        pnl = get_pnl(strategy, start)
+                        if strategy['max_pnl_reached'] < pnl:                         
+                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'max_pnl_reached': pnl}})
+                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'trailing_stop_loss': strategy['stop_loss'] + pnl}})
                         
-                        if strategy['min_pnl_reached'] > get_pnl(strategy, start):
-                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'min_pnl_reached': get_pnl(strategy, start)}})
+                        if strategy['min_pnl_reached'] > pnl:
+                            strategies.update_one({'_id': strategy['_id']}, {'$set': {'min_pnl_reached': pnl}})
 
-                        if get_pnl(strategy, start) <= strategy['stop_loss']:
-                            util.notify(f"SL HIT! Current PnL: {strategy['running_pnl']}",slack_client=slack_client, slack_channel=slack_channel)
+                        if pnl <= strategy['trailing_stop_loss']:
+                            util.notify(f"SL HIT! Current PnL: {pnl}",slack_client=slack_client, slack_channel=slack_channel)
                             close_active_positions("SL HIT")
                             break
 
-                        if get_pnl(strategy, start) >= strategy['target']:
-                            util.notify(f"Target HIT! Current PnL: {strategy['running_pnl']}",slack_client=slack_client, slack_channel=slack_channel)
+                        if pnl >= strategy['target']:
+                            util.notify(f"Target HIT! Current PnL: {pnl}",slack_client=slack_client, slack_channel=slack_channel)
                             close_active_positions("Target HIT")
                             break
 
