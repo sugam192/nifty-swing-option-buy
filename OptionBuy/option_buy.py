@@ -385,9 +385,9 @@ def main():
                     atm_next_straddle = supertrend_collection.find_one({"_id": "atm_next_straddle"})
                     atm_prev_straddle = supertrend_collection.find_one({"_id": "atm_prev_straddle"})
 
-                    if (atm_next_straddle['HPFT'] == True or atm_next_straddle['AFT'] == True) and current_time > datetime.time(hour=9, minute=31):
+                    if atm_next_straddle['AFT'] == True and current_time > datetime.time(hour=9, minute=31):
                         buy_call(strike=atm_next_straddle['strike'], pcr=atm_next_straddle['pcr'])
-                    elif (atm_prev_straddle['HPFT'] == True or atm_prev_straddle['AFT'] == True) and current_time > datetime.time(hour=9, minute=31):
+                    elif atm_prev_straddle['AFT'] == True and current_time > datetime.time(hour=9, minute=31):
                         buy_put(strike=atm_prev_straddle['strike'], pcr=atm_prev_straddle['pcr'])
                     else:
                         print("Waiting for the entry signal...")

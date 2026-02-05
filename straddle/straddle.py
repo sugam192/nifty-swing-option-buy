@@ -158,20 +158,10 @@ def main():
                     atm_prev_strike = util.round_to_nearest(Nifty_ltp - delta, base=50)
 
                     pcr_value = pcr(conn, atm=util.round_to_nearest(Nifty_ltp, base=50), multiple=50)
-                    atm_next_HPFT_high = None
-                    atm_prev_HPFT_high = None
-
-                    atm_next_HP_high = None
-                    atm_prev_HP_high = None
-
-                    atm_next_HPFT = False
-                    atm_prev_HPFT = False
-
-                    atm_next_BTFT = False
-                    atm_prev_BTFT = False
 
                     atm_next_AFT = False
-                    atm_prev_AFT = False                    
+                    atm_prev_AFT = False   
+
                     initialization_needed = False
 
                 atm_next_straddle, atm_next_CE_option_symbol, atm_next_PE_option_symbol = get_straddle_chart(conn, strike=atm_next_strike)
@@ -186,69 +176,33 @@ def main():
                     # Check for Anchor coloumn at -3
                     if atm_next_straddle.iloc[-3]['count'] >=25:
                         atm_next_AFT = True
-                        atm_next_HPFT = False
-                    # Check for HPFT at -1
-                    elif atm_next_straddle.iloc[-2]['high_pole']:
-                        atm_next_HP_high = atm_next_straddle.iloc[-2]['high']
-                        atm_next_HPFT = True
-                        atm_next_HPFT_high = atm_next_straddle.iloc[-2]['high']
-                    # Check for HPFT at -4
-                    elif atm_next_straddle.iloc[-4]['high_pole'] == True and atm_next_straddle.iloc[-3:]['high'].max() <= atm_next_straddle.iloc[-4]['high']:
-                        atm_next_HP_high = atm_next_straddle.iloc[-4]['high']
-                        atm_next_HPFT = True
-                        atm_next_HPFT_high = atm_next_straddle.iloc[-2]['high']
-                    # Check for HPFT at -6
-                    elif atm_next_straddle.iloc[-6]['high_pole'] == True and atm_next_straddle.iloc[-5:]['high'].max() <= atm_next_straddle.iloc[-6]['high'] and atm_next_straddle.iloc[-3]['double_bottom_sell'] == False:
-                        atm_next_HP_high = atm_next_straddle.iloc[-6]['high']
-                        atm_next_HPFT = True
-                        atm_next_HPFT_high = atm_next_straddle.iloc[-2]['high']
+                    # Check for Anchor Coloumn at -5
+                    elif atm_next_straddle.iloc[-5]['count'] >=25 and atm_next_straddle.iloc[-4:]['high'].max() <= atm_next_straddle.iloc[-5]['high']:
+                        atm_next_AFT = True
+
                 else:
-                    atm_next_HPFT = False
                     atm_next_AFT = False
+
                 if atm_prev_straddle.iloc[-1]['double_bottom_sell'] == True:
+                    # Check for Anchor coloumn at -3
                     if atm_prev_straddle.iloc[-3]['count'] >=25:
                         atm_prev_AFT = True
-                        atm_prev_HPFT = False
-                    # Check for HPFT at -1
-                    elif atm_prev_straddle.iloc[-2]['high_pole']:
-                        atm_prev_HP_high = atm_prev_straddle.iloc[-2]['high']
-                        atm_prev_HPFT = True
-                        atm_prev_HPFT_high = atm_prev_straddle.iloc[-2]['high']
-                    # Check for HPFT at -4
-                    elif atm_prev_straddle.iloc[-4]['high_pole'] == True and atm_prev_straddle.iloc[-3:]['high'].max() <= atm_prev_straddle.iloc[-4]['high']:
-                        atm_prev_HP_high = atm_prev_straddle.iloc[-4]['high']
-                        atm_prev_HPFT = True
-                        atm_prev_HPFT_high = atm_prev_straddle.iloc[-2]['high']
-                    # Check for HPFT at -6
-                    elif atm_prev_straddle.iloc[-6]['high_pole'] == True and atm_prev_straddle.iloc[-5:]['high'].max() <= atm_prev_straddle.iloc[-6]['high'] and atm_prev_straddle.iloc[-3]['double_bottom_sell'] == False:
-                        atm_prev_HP_high = atm_prev_straddle.iloc[-6]['high']
-                        atm_prev_HPFT = True
-                        atm_prev_HPFT_high = atm_prev_straddle.iloc[-2]['high']
-                else:
-                    atm_prev_HPFT = False
-                    atm_prev_AFT = False
-
-                if atm_next_straddle.iloc[-1]['double_top_buy'] == True and atm_next_straddle.iloc[-3]['bullish_turtle'] == True:
-                    atm_next_BTFT = True
-                else:
-                    atm_next_BTFT = False
-                if atm_prev_straddle.iloc[-1]['double_top_buy'] == True and atm_prev_straddle.iloc[-3]['bullish_turtle'] == True:
-                    atm_prev_BTFT = True
-                else:
-                    atm_prev_BTFT = False
+                    # Check for Anchor Coloumn at -5
+                    elif atm_prev_straddle.iloc[-5]['count'] >=25 and atm_prev_straddle.iloc[-4:]['high'].max() <= atm_prev_straddle.iloc[-5]['high']:
+                        atm_prev_AFT = True
 
 
                 if supertrend_collection.count_documents({"_id": "atm_next_straddle"}) == 0:
-                    st = {"_id": "atm_next_straddle", "datetime": atm_next_straddle.iloc[-1]['datetime'], "straddle_close": atm_next_straddle.iloc[-1]['close'], "strike": atm_next_strike, "HPFT":atm_next_HPFT, "HPFT_high":atm_next_HPFT_high, "BTFT":atm_next_BTFT, "CE_option_symbol": atm_next_CE_option_symbol, "PE_option_symbol": atm_next_PE_option_symbol, "HP_high": atm_next_HP_high, "pcr": pcr_value,"AFT": atm_next_AFT}
+                    st = {"_id": "atm_next_straddle", "datetime": atm_next_straddle.iloc[-1]['datetime'], "straddle_close": atm_next_straddle.iloc[-1]['close'], "strike": atm_next_strike, "CE_option_symbol": atm_next_CE_option_symbol, "PE_option_symbol": atm_next_PE_option_symbol,"pcr": pcr_value,"AFT": atm_next_AFT}
                     supertrend_collection.insert_one(st)
                 else:
-                    supertrend_collection.update_one({"_id": "atm_next_straddle"}, {"$set": {"datetime": atm_next_straddle.iloc[-1]['datetime'], "straddle_close": atm_next_straddle.iloc[-1]['close'], "strike": atm_next_strike, "HPFT":atm_next_HPFT, "HPFT_high":atm_next_HPFT_high, "BTFT":atm_next_BTFT, "CE_option_symbol": atm_next_CE_option_symbol, "PE_option_symbol": atm_next_PE_option_symbol, "HP_high": atm_next_HP_high, "pcr": pcr_value, "AFT": atm_next_AFT}})
+                    supertrend_collection.update_one({"_id": "atm_next_straddle"}, {"$set": {"datetime": atm_next_straddle.iloc[-1]['datetime'], "straddle_close": atm_next_straddle.iloc[-1]['close'], "strike": atm_next_strike, "CE_option_symbol": atm_next_CE_option_symbol, "PE_option_symbol": atm_next_PE_option_symbol, "pcr": pcr_value, "AFT": atm_next_AFT}})
                 
                 if supertrend_collection.count_documents({"_id": "atm_prev_straddle"}) == 0:
-                    st = {"_id": "atm_prev_straddle", "datetime": atm_prev_straddle.iloc[-1]['datetime'], "straddle_close": atm_prev_straddle.iloc[-1]['close'], "strike": atm_prev_strike, "HPFT":atm_prev_HPFT, "HPFT_high":atm_prev_HPFT_high, "BTFT":atm_prev_BTFT, "CE_option_symbol": atm_prev_CE_option_symbol, "PE_option_symbol": atm_prev_PE_option_symbol, "HP_high": atm_prev_HP_high, "pcr": pcr_value,"AFT": atm_prev_AFT}
-                    supertrend_collection.insert_one(st)
+                    st = {"_id": "atm_prev_straddle", "datetime": atm_prev_straddle.iloc[-1]['datetime'], "straddle_close": atm_prev_straddle.iloc[-1]['close'], "strike": atm_prev_strike, "CE_option_symbol": atm_prev_CE_option_symbol, "PE_option_symbol": atm_prev_PE_option_symbol,"pcr": pcr_value,"AFT": atm_prev_AFT}
+                    supertrend_collection.insert_one(st)    
                 else:
-                    supertrend_collection.update_one({"_id": "atm_prev_straddle"}, {"$set": {"datetime": atm_prev_straddle.iloc[-1]['datetime'], "straddle_close": atm_prev_straddle.iloc[-1]['close'], "strike": atm_prev_strike, "HPFT":atm_prev_HPFT, "HPFT_high":atm_prev_HPFT_high, "BTFT":atm_prev_BTFT, "CE_option_symbol": atm_prev_CE_option_symbol, "PE_option_symbol": atm_prev_PE_option_symbol, "HP_high": atm_prev_HP_high, "pcr": pcr_value, "AFT": atm_prev_AFT}})
+                    supertrend_collection.update_one({"_id": "atm_prev_straddle"}, {"$set": {"datetime": atm_prev_straddle.iloc[-1]['datetime'], "straddle_close": atm_prev_straddle.iloc[-1]['close'], "strike": atm_prev_strike, "CE_option_symbol": atm_prev_CE_option_symbol, "PE_option_symbol": atm_prev_PE_option_symbol, "pcr": pcr_value, "AFT": atm_prev_AFT}})
 
                 
         print("repeating loop for Supertrend")
