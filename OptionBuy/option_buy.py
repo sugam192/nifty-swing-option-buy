@@ -257,6 +257,8 @@ def record_details_in_mongo(buy_strike_symbol, trend, expiry, long_option_cost, 
     'strategy_state': 'active',
     'entry_date': str(datetime.datetime.now().date()),
     'exit_date': '',
+    'entry_day_of_week': datetime.datetime.now().strftime('%A'),
+    'exit_day_of_week': '',
     'trend' : trend,
     'long_option_symbol' : buy_strike_symbol,
     'long_option_cost' : long_option_cost,
@@ -283,7 +285,7 @@ def calculate_pnl(quantity, entry, exit):
     return round(pnl, 2)
 
 @retry(tries=5, delay=5, backoff=2)
-def close_active_positions(reason, ltp=None):
+def close_active_positions(reason):
     print(f"Closing active positions {instrument_name}")
     util.notify(f"Closing active positions {instrument_name}",slack_client=slack_client, slack_channel=slack_channel)
     active_strategies = strategies.find({'strategy_state': 'active'})
@@ -293,10 +295,10 @@ def close_active_positions(reason, ltp=None):
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'strategy_state': 'closed'}})
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'exit_date': str(datetime.datetime.now().date())}})
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'exit_time': datetime.datetime.now().strftime('%H:%M')}})
-        #strategies.update_one({'_id': strategy['_id']}, {'$set': {'long_exit_price': sell_order['average_traded_price']}})
-        strategies.update_one({'_id': strategy['_id']}, {'$set': {'long_exit_price': ltp if ltp else sell_order['average_traded_price']}})
+        strategies.update_one({'_id': strategy['_id']}, {'$set': {'exit_day_of_week': datetime.datetime.now().strftime('%A')}})
+        strategies.update_one({'_id': strategy['_id']}, {'$set': {'long_exit_price': sell_order['average_traded_price']}})
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'exit_reason': reason}})
-        pnl = calculate_pnl(strategy['quantity'], strategy['long_option_cost'], ltp if ltp else sell_order['average_traded_price'])
+        pnl = calculate_pnl(strategy['quantity'], strategy['long_option_cost'], sell_order['average_traded_price'])
         util.notify(f"Realized Gains: {round(pnl, 2)}",slack_client=slack_client, slack_channel=slack_channel)
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'pnl': pnl}})
         strategies.update_one({'_id': strategy['_id']}, {'$set': {'net_pnl': (pnl-(105*total_lots))}})  # Deducting brokerage and taxes
@@ -351,6 +353,7 @@ def main():
                         if strategy['max_pnl_reached'] < pnl:                         
                             strategies.update_one({'_id': strategy['_id']}, {'$set': {'max_pnl_reached': pnl}})
                             strategies.update_one({'_id': strategy['_id']}, {'$set': {'trailing_stop_loss': strategy['stop_loss'] + pnl}})
+                            util.notify(f"New Max PnL reached: {pnl}, Updated Trailing SL: {strategy['stop_loss'] + pnl}",slack_client=slack_client, slack_channel=slack_channel)
                         
                         if strategy['min_pnl_reached'] > pnl:
                             strategies.update_one({'_id': strategy['_id']}, {'$set': {'min_pnl_reached': pnl}})
@@ -374,7 +377,7 @@ def main():
                                 days_active = (datetime.datetime.now().date() - entry_date_obj).days
                                 if days_active >= 2 and current_time >= datetime.time(hour=14, minute=30):
                                     util.notify("Time based Stop Loss Hit (2 days active)", slack_client=slack_client, slack_channel=slack_channel)
-                                    close_active_positions("Time based Stop Loss (2 days)")
+                                    close_active_positions("Time based Stop Loss (2 days active)")
                                     break
                             except Exception as e:
                                 print(f"Error parsing entry_date: {e}")
